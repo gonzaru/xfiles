@@ -2314,7 +2314,8 @@ keypress(Widget *widget, XKeyEvent *xev, int *selitems, int *nitems, char **text
 				False
 			);
 		}
-		highlight(widget, widget->highlight + 1);
+		/* do not highlight the next item when space is pressed */
+		/* highlight(widget, widget->highlight + 1); */
 		break;
 	case XK_Prior:
 	case XK_Next:
