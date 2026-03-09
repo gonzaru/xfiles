@@ -508,9 +508,9 @@ loadxdb(Widget *widget, const char *str)
 static void
 drawstatusbar(Widget *widget)
 {
-	size_t statuslen, scrolllen;
-	int countwid, statuswid, scrollwid, rightwid;
-	char const *status;
+	size_t statuslen = 0, scrolllen;
+	int countwid, statuswid = 0, scrollwid, rightwid;
+	char const *status = NULL;
 	char countstr[64];    /* enough for writing number of files */
 	char scrollstr[8];    /* enough for writing the percentage */
 	int scrollpct;
@@ -2332,15 +2332,18 @@ keypress(Widget *widget, XKeyEvent *xev, int *selitems, int *nitems, char **text
 	case XK_Down:
 	case XK_Left:
 	case XK_Right:
+	/* ADDED */
+	case XK_0:
+	case XK_dollar:
 hjkl:
 		redrawall = True;
-		if (ksym == XK_Home) {
+		if (ksym == XK_Home || ksym == XK_0) {
 			index = 0;
 			widget->ydiff = 0;
 			setrow(widget, 0);
 			goto draw;
 		}
-		if (ksym == XK_End) {
+		if (ksym == XK_End || ksym == XK_dollar) {
 			index = widget->nitems - 1;
 			widget->ydiff = 0;
 			setrow(widget, widget->nscreens - 1);
@@ -2390,7 +2393,7 @@ hjkl:
 draw:
 		previtem = widget->highlight;
 		highlight(widget, index);
-		if (xev->state & ShiftMask)
+		if ((xev->state & ShiftMask) && ksym != XK_dollar) /* ADDED && ksym != XK_dollar */
 			selectitems(widget, index, previtem);
 		else if (xev->state & ControlMask)
 			selectitem(widget, index, True, 0);
@@ -2417,7 +2420,10 @@ draw:
 		if (!FLAG(xev->state, ControlMask)) {
 			if (ksym == XK_h || ksym == XK_j || ksym == XK_k || ksym == XK_l)
 				goto hjkl;
-			break;
+			/* ADDED */
+			if (ksym != XK_b && ksym != XK_d && ksym != XK_r && ksym != XK_f && ksym != XK_w && ksym != XK_W
+			 && ksym != XK_s && ksym != XK_m && ksym != XK_n && ksym != XK_p && ksym != XK_slash)
+			  break;
 		}
 		/* FALLTHROUGH */
 	case XK_F1: case XK_F2: case XK_F3: case XK_F4: case XK_F5: case XK_F6:
@@ -2648,7 +2654,7 @@ nextevent(Widget *widget, XEvent *ev, Time timeout)
 		if (is_timed_out(&lasttime, timeout))
 			return TimeoutNotify;
 		if (XPending(widget->display) == 0)
-			if (poll(&pfd, 1, timeout?timeout:-1) <= 0)
+			if (poll(&pfd, 1, timeout ? (int)timeout : -1) <= 0)
 				continue;
 		(void)XNextEvent(widget->display, ev);
 		if (!filter_event(widget, ev))
