@@ -236,7 +236,7 @@ get_property(Display *display, Window window, Atom property,
 		goto error;
 	if (format != 0 && format != actual_format)
 		goto error;
-	if (nitems <= 0)
+	if (nitems == 0)
 		goto error;
 	*data_ret = data;
 	return nitems;
@@ -278,7 +278,7 @@ create_dndowner(Display *display, int screen, struct selection *dnddata)
 	height = xpmattr.height;
 	dndowner = XCreateWindow(
 		display, root,
-		-2 * width, -2 * height, /* off-screen to assure it stays hidden */
+		(int)(-2 * width), (int)(-2 * height), /* off-screen to assure it stays hidden */
 		width, height, 0,
 		CopyFromParent, InputOutput, CopyFromParent,
 		CWBackPixel|CWBorderPixel|CWBackPixmap|CWOverrideRedirect,
@@ -721,13 +721,13 @@ get_where_dropped(Display *display, int screen, Window dndowner, Window icon,
 	int (*callback)(XEvent *, void *), void *arg)
 {
 	struct timespec now;
-	XEvent event;
+	XEvent event = { 0 };
 	Window dropsite, olddropsite;
 	Atom action, oldaction;
-	long version;
+	long version = 0;
 	Bool gotstatus, notifypos, accepted;
 	XRectangle dropzone;
-	XEvent savedpos;
+	XEvent savedpos = { 0 };
 	KeySym key;
 
 	/* from libX11 but declared in X11/XKBlib.h */
@@ -935,7 +935,7 @@ map_icon(Display *display, Window root, Window icon)
 		display, icon, CWOverrideRedirect,
 		&(XSetWindowAttributes){.override_redirect = True}
 	);
-	(void)XReparentWindow(display, icon, root, -2 * width, -2 * height);
+	(void)XReparentWindow(display, icon, root, (int)(-2 * width), (int)(-2 * height));
 	(void)XChangeProperty(
 		display, icon, atomtab[PROPERTY_OPACITY],
 		XA_CARDINAL, 32, PropModeReplace,

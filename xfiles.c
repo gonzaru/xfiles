@@ -167,11 +167,9 @@ statusfmt(struct stat *sb)
 	number = 0;
 	if (sb->st_size <= 0)
 		goto done;
-	for (i = 0; i < UNIT_LAST; i++)
+	for (i = 0; i < UNIT_LAST - 1; i++)
 		if (sb->st_size < units[i + 1].n)
 			break;
-	if (i == UNIT_LAST)
-		goto done;
 	fract = (i == 0) ? 0 : sb->st_size % units[i].n;
 	fract /= (i == 0) ? 1 : units[i - 1].n;
 	fract = (10 * fract + 512) / 1024;
