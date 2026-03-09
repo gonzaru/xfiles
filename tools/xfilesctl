@@ -61,7 +61,7 @@ _dmenusel() {
 _dmenuerr() {
   dmenu -w "$WINDOWID" \
         -nf '#BBBBBB' -nb '#373737' \
-        -sf '#000000' -sb '#E62300' \
+        -sf '#FFFFFF' -sb '#FF0000' \
         -fn 'DejaVu Sans Mono:pixelsize=14:antialias=true:autohint=true'
 }
 
@@ -87,15 +87,15 @@ prompt() {
   # MODIFIED
   # same background
   # -nb "#2B2B2B"
-	#dmenu -i -w "$WINDOWID" \
-  #     -nf "#BBBBBB" \
-  #     -nb "#373737" \
-  #     -sf "#000000" \
-  #     -sb "#9eeeee" \
-  #     -fn "DejaVu Sans Mono:pixelsize=14:antialias=true:autohint=true" \
-  #     -p '>' \
-  #     -l 15
-  _dmenusel -p '>' -l 15
+	# dmenu -i -w "$WINDOWID" \
+  #       -nf "#BBBBBB" \
+  #       -nb "#373737" \
+  #       -sf "#000000" \
+  #       -sb "#9eeeee" \
+  #       -fn "DejaVu Sans Mono:pixelsize=14:antialias=true:autohint=true" \
+  #       -p '>' \
+  #       -l 15
+  _dmenusel -p "$(basename "${PWD}")/" -l 25
 }
 
 
@@ -234,11 +234,9 @@ setuniquepath() {
 
 	# create unique name
 	unset -v i p
-	while test -e "$dirname/$body$p$i$ext"
-	do
+	while test -e "$dirname/$body$p$i$ext"; do
 		p="_"
-		if [ -z "$i" ]
-		then
+		if [ -z "$i" ]; then
 			i=1
 		else
 			i=$((i + 1))
@@ -250,8 +248,7 @@ setuniquepath() {
 # copy files here if user confirms dialog
 copy() {
 	dialog "Copy files to $PWD?" "$@" && {
-		for file
-		do
+		for file; do
 			setuniquepath "$PWD/${file##*/}"
 			cp -v "$file" "$uniquepath"
 		done
@@ -261,8 +258,7 @@ copy() {
 # move files here if user confirms dialog
 move() {
 	dialog "Move files to $PWD?" "$@" && {
-		for file
-		do
+		for file; do
 			setuniquepath "$PWD/${file##*/}"
 			mv -v "$file" "$uniquepath"
 		done
@@ -272,8 +268,7 @@ move() {
 # link files here if user confirms dialog
 link() {
 	dialog "Link files to $PWD?" "$@" && {
-		for file
-		do
+		for file; do
 			setuniquepath "$PWD/${file##*/}"
 			ln -s "$file" "$uniquepath"
 		done
@@ -286,8 +281,7 @@ trash() {
 	dialog "Send files to trash?" "$@" || return
 	# shellcheck disable=SC2174
 	mkdir -m 700 -p -- "$TRASH/files" "$TRASH/info" || exit 1
-	for file
-	do
+	for file; do
 		test -e "$file" || continue
 
 		# get unique target
@@ -305,30 +299,33 @@ trash() {
 
 # find files on the selected directory
 findfiles() {
-  if [ "$#" -ne 1 ]; then
+  if [ "$#" -gt 1 ]; then
     echo "error: only one directory is allowed" | _dmenuerr
     exit 1
-  fi
-  dir=${1%/}
-	if [ -d "$dir" ]; then
-		if [ -z "$(ls -A "$dir")" ]; then
-      echo "error: the directory '$dir' is empty" | _dmenuerr
-      exit 1
-		fi
-		# entry=$(find "$dir" -type f | dmenu -l 10)
-		entry="${dir}"/$(fd --base-directory "$dir" | _dmenusel -p '>' -l 10)
-		entry="${entry%/}"
-		if [ "$entry" = "$dir" ]; then
-		  exit 0
-		fi
-		if [ -d "$entry" ]; then
-			changedir "$entry"
-		else
-			open "$entry"
-		fi
+  elif [ "$#" -eq 1 ]; then
+	  dirname="${1%/}"
 	else
+	  dirname="${PWD}"
+  fi
+  if [ ! -d "$dirname" ]; then
     echo "error: only directories can use find" | _dmenuerr
     exit 1
+  fi
+	if [ -z "$(ls -A "$dirname")" ]; then
+    echo "error: the directory '$dirname' is empty" | _dmenuerr
+    exit 1
+	fi
+	# entry=$(find "$dirname" -type f | dmenu -l 10)
+	hidden=$([ -n "$XFILES_SHOW_HIDDEN" ] && [ "$XFILES_SHOW_HIDDEN" = 1 ] && echo "--hidden" || echo "")
+	entry="${dirname}"/$(fd --base-directory "$dirname" "$hidden" | _dmenusel -p "$(basename "${dirname}")/" -l 25)
+	entry="${entry%/}"
+	if [ "$entry" = "$dirname" ]; then
+	  return
+	fi
+	if [ -d "$entry" ]; then
+		changedir "$entry"
+	else
+		open "$entry"
 	fi
 }
 
@@ -338,14 +335,12 @@ untrash() {
 
 	# compose dialog message
 	msg="Restore files from trash?"
-	for file
-	do
+	for file; do
 		shift
 		basename="${file##*/}"
 		infofile="$TRASH/info/$basename.trashinfo"
 		origfile="$(sed -En '/^[[:blank:]]*Path[[:blank:]]*=/{s/.*=[[:blank:]]*//;p;q;}' < "$infofile")"
-		if test -e "$origfile"
-		then
+		if test -e "$origfile"; then
 			warn "$basename: file already exists on original directory"
 		else
 			set -- "$file" "$origfile" "$infofile"
@@ -356,8 +351,7 @@ untrash() {
 
 	dialog "$msg" || return
 
-	while test $# -gt 0
-	do
+	while test $# -gt 0; do
 		file="$1"
 		origfile="$2"
 		infofile="$3"
@@ -372,8 +366,7 @@ delete() {
 	rm -rf -- "$@"
 	case "$PWD" in
 	("$TRASH/files")
-		for file
-		do
+		for file; do
 			rm -rf -- "$TRASH/info/${file##*/}.trashinfo"
 		done
 		;;
@@ -413,8 +406,7 @@ paste() {
 		echo
 	} | sed 's,^file://,,' | tr -d '\r' | {
 		set --
-		while read -r f
-		do
+		while read -r f; do
 			case "$f" in
 			("")
 				;;
@@ -611,10 +603,29 @@ changedir() {
 
 # prompt for file to open or directory to go to
 urlbar() {
-	printf '%s\n' * | prompt | {
+	# printf '%s\n' * | prompt | {
+	if [ -n "$XFILES_SHOW_HIDDEN" ] && [ "$XFILES_SHOW_HIDDEN" = 1 ]; then
+    files="$({
+      fd --max-depth 1 --type d;
+      fd '^\.' --max-depth 1 --type d --hidden;
+      fd --max-depth 1 --type l;
+      fd '^\.' --max-depth 1 --type l --hidden;
+      fd --max-depth 1 --type f "$hidden";
+      fd '^\.' --max-depth 1 --type f --hidden;
+    })"
+  else
+    files="$({
+      fd --max-depth 1 --type d;
+      fd --max-depth 1 --type l;
+      fd --max-depth 1 --type f;
+    })"
+  fi
+	echo "$files" | prompt | {
 		read -r entry
-		if test -d "$entry"
-		then
+	  if [ -z "$entry" ]; then
+	    return
+	  fi
+		if [ -d "$entry" ]; then
 			changedir "$entry"
 		else
 			open "$entry"
@@ -660,6 +671,7 @@ new file (edit)
 new directory
 refresh
 toggle hidden
+find ($(basename "$PWD"))
 go
 	go home
 	go up
@@ -707,8 +719,26 @@ EOF
 		("new file (edit)")
 			makefile "edit"
 			;;
+	  ("find ($(basename "$PWD"))")
+		  # if [ "$PWD" = "$HOME" ]; then
+	    #   if dialog "Find files to ${PWD}?"; then
+		  #     findfiles "$@"
+		  #   fi
+		  # else
+		  #   findfiles "$@"
+		  # fi
+		  case "$PWD" in
+		    "${HOME}"/* )
+		      findfiles "$@"
+		    ;;
+		  *)
+	      if dialog "Find files to ${PWD}?"; then
+		      findfiles "$@"
+		    fi
+		    ;;
+		  esac
+		  ;;
 		("go up")
-    cur="$(pwd)"
 			changedir ".."
 			;;
 		("go home")
@@ -792,7 +822,7 @@ filemenu() {
 		cat <<-EOF
 		open {$(xdg-mime query default "$(xdg-mime query filetype "$*")" | sed 's/\.desktop$//')}
 		open (with)
-		find
+		find ($(basename "$1"))
 		set mime (xdg)
 		set mime (mimetype)
 		set mime (file)
@@ -854,7 +884,7 @@ filemenu() {
       fi
 			openwith "$1"
 			;;
-		("find")
+		("find ($(basename "$1"))")
 		  findfiles "$@"
 		  ;;
 		esac
@@ -941,10 +971,9 @@ case "$operation" in
 	# link dropped files here
 	link "$@"
 	;;
-(^BackSpace|^b)  # just 'b', just 'BackSpace' (BackSpace is default like this)
-  cur="$(pwd)"
-  if [ "$cur" != "/" ]; then
-    echo "$cur" >> "$LOG_PREVS_DIRS"
+(^minus|^BackSpace|^b)  # just 'b', just '-', just 'BackSpace' (BackSpace is default like this)
+  if [ "$PWD" != "/" ]; then
+    echo "$PWD" >> "$LOG_PREVS_DIRS"
     ndirs="$(wc -l < "$LOG_PREVS_DIRS")"
     if [ "$ndirs" -gt "$MAX_PREVS_DIRS" ]; then
       sed -i '1d' "$LOG_PREVS_DIRS"
@@ -960,7 +989,7 @@ case "$operation" in
 # ADDED: (previous dir)
 # TODO: why OLDPWD is not set?
 # changedir "-" does not work
-(^minus|^6)
+(^6)
  if [ -f "${LOG_PREV_DIR}" ]; then
    pwd >> "$LOG_PREVS_DIRS"
    ndirs="$(wc -l < "$LOG_PREVS_DIRS")"
@@ -970,7 +999,6 @@ case "$operation" in
    changedir "$(cat "${LOG_PREV_DIR}")"
  fi
 ;;
-# (^minus|^f)  # just 'f'
 (^f)  # just 'f'
   if [ -s "$LOG_PREVS_DIRS" ]; then
     last=$(tail -n 1 "$LOG_PREVS_DIRS")
