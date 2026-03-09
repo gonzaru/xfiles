@@ -928,8 +928,7 @@ filemenu() {
 operation="$1"
 # echo "$operation" > /tmp/key.txt
 shift 1
-for file
-do
+for file; do
 	shift 1
 	case "$file" in
 	("")
@@ -1031,7 +1030,7 @@ case "$operation" in
 	changedir "."
 	;;
 (^w)  # just 'w'
-  groot="$(git rev-parse --show-toplevel)"
+  groot="$(git rev-parse --show-toplevel 2>/dev/null)"
   if [ -d "$groot" ]; then
     changedir "$groot"
   fi
