@@ -2423,7 +2423,7 @@ draw:
 				goto hjkl;
 			/* ADDED */
 			if (ksym != XK_b && ksym != XK_d && ksym != XK_r && ksym != XK_f && ksym != XK_F && ksym != XK_w && ksym != XK_W
-			 && ksym != XK_s && ksym != XK_m && ksym != XK_n && ksym != XK_p && ksym != XK_slash && ksym != XK_minus)
+			 && ksym != XK_s && ksym != XK_m && ksym != XK_n && ksym != XK_p && ksym != XK_slash && ksym != XK_period && ksym != XK_minus)
 			  break;
 		}
 		/* FALLTHROUGH */
