@@ -154,7 +154,7 @@ statusfmt(struct stat *sb)
 {
 	int i;
 	time_t time;
-	long long int number, fract;
+	long long int number = 0, fract = 0;
 	struct passwd *pw = NULL;
 	struct group *gr = NULL;
 	struct tm tm;
