@@ -276,7 +276,7 @@ entrycmp(const void *ap, const void *bp)
 }
 
 static int
-setthumbpath(struct FM *fm, char *orig, char *thumb)
+setthumbpath(struct FM *fm, char *orig, char *thumb, size_t thumbsz)
 {
 	char buf[PATH_MAX];
 	int i;
@@ -286,7 +286,7 @@ setthumbpath(struct FM *fm, char *orig, char *thumb)
 	for (i = 0; buf[i] != '\0'; i++)
 		if (buf[i] == '/')
 			buf[i] = '%';
-	snprintf(thumb, PATH_MAX, "%s/%s.ppm", fm->thumbnaildir, buf);
+	snprintf(thumb, thumbsz, "%s/%s.ppm", fm->thumbnaildir, buf);
 	return RETURN_SUCCESS;
 }
 
@@ -415,7 +415,7 @@ thumbnailer(void *arg)
 {
 	struct FM *fm;
 	int i;
-	char path[PATH_MAX];
+	char path[PATH_MAX * 2];
 
 	fm = (struct FM *)arg;
 	for (i = 0; i < fm->nentries; i++) {
@@ -425,7 +425,7 @@ thumbnailer(void *arg)
 			continue;
 		if (strncmp(fm->entries[i].fullname, fm->thumbnaildir, fm->thumbnaildirlen) == 0)
 			continue;
-		if (setthumbpath(fm, fm->entries[i].fullname, path) == RETURN_FAILURE)
+		if (setthumbpath(fm, fm->entries[i].fullname, path, sizeof(path)) == RETURN_FAILURE)
 			continue;
 		if (thumbexists(&fm->entries[i], path)) {
 			widget_thumb(fm->widget, path, i);
