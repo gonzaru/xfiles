@@ -268,10 +268,19 @@ entrycmp(const void *ap, const void *bp)
 		return 1;
 
 	/* dotentries (hidden entries) first */
+	/*
 	if (a->name[0] == '.' && b->name[0] != '.')
 		return -1;
 	if (b->name[0] == '.' && a->name[0] != '.')
 		return 1;
+	*/
+
+	/* regular entries before dotentries (hidden entries) */
+	if (a->name[0] == '.' && b->name[0] != '.')
+		return 1;
+	if (b->name[0] == '.' && a->name[0] != '.')
+		return -1;
+
 	return strcoll(a->name, b->name);
 }
 
@@ -659,6 +668,10 @@ runxfilesctl(struct FM *fm, char **argv, char *path)
 	 */
 	if (pipe2(pipefds, O_CLOEXEC) == RETURN_FAILURE)
 		err(EXIT_FAILURE, "pipe2");
+
+	/* env var to know the hidden state */
+	setenv("XFILES_SHOW_HIDDEN", hide ? "0" : "1", 1);
+
 	if ((pid = efork()) == 0) {
 		/* waiting child */
 		eclose(pipefds[END_READ]);
