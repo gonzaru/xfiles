@@ -2422,7 +2422,7 @@ draw:
 			if (ksym == XK_h || ksym == XK_j || ksym == XK_k || ksym == XK_l)
 				goto hjkl;
 			/* ADDED */
-			if (ksym != XK_b && ksym != XK_d && ksym != XK_r && ksym != XK_f && ksym != XK_w && ksym != XK_W
+			if (ksym != XK_b && ksym != XK_d && ksym != XK_r && ksym != XK_f && ksym != XK_F && ksym != XK_w && ksym != XK_W
 			 && ksym != XK_s && ksym != XK_m && ksym != XK_n && ksym != XK_p && ksym != XK_slash)
 			  break;
 		}
